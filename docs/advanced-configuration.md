@@ -113,6 +113,11 @@ the custom Secret must contain the matching key:
 | `splunk_platform_otlp_client_key` | OTLP log ingest client key. |
 | `splunk_platform_otlp_ca_file` | OTLP log ingest CA certificate. |
 
+For Splunk Platform HEC, the chart mounts `splunk_platform_hec_token` from the
+Secret at `/otel/etc/splunk_platform_hec_token` and renders the HEC exporters to
+read the token from that file. The token is not injected into the Collector pods
+as an environment variable.
+
 For TLS files, the chart renders the Collector file reference only when the
 corresponding `splunkPlatform.*` or `splunkPlatform.otlpIngest.*` value is
 non-empty. When `secret.create: false`, provide the actual PEM content in the

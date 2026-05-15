@@ -1,0 +1,5 @@
+change_type: enhancement
+component: chart
+note: "Mount the Splunk Platform HEC token as a file instead of injecting it as an environment variable."
+issues: []
+subtext:

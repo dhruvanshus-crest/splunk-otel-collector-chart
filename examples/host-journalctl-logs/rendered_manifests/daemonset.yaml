@@ -87,7 +87,10 @@ spec:
           volumeMounts:
             - name: checkpoint
               mountPath: /var/addon/splunk/otel_pos
-            - name: varlog
+            - name: secret
+          mountPath: /otel/etc
+          readOnly: true
+        - name: varlog
               mountPath: /var/log
             - name: varlibdockercontainers
               mountPath: /var/lib/docker/containers
@@ -146,11 +149,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          - name: SPLUNK_PLATFORM_HEC_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: default-splunk-otel-collector
-                key: splunk_platform_hec_token
 
         readinessProbe:
           httpGet:
@@ -223,6 +221,9 @@ spec:
       - name: journaldlogs
         hostPath:
           path: /var/log/journal
+      - name: secret
+        secret:
+          secretName: default-splunk-otel-collector
       - name: otel-configmap
         configMap:
           name: default-splunk-otel-collector-otel-agent

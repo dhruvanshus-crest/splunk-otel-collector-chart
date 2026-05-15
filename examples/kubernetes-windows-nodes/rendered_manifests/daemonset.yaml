@@ -123,11 +123,6 @@ spec:
               secretKeyRef:
                 name: default-splunk-otel-collector
                 key: splunk_observability_access_token
-          - name: SPLUNK_PLATFORM_HEC_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: default-splunk-otel-collector
-                key: splunk_platform_hec_token
 
         readinessProbe:
           httpGet:
@@ -148,6 +143,9 @@ spec:
           name: otel-configmap
         - mountPath: C:\hostfs
           name: hostfs
+          readOnly: true
+        - name: secret
+          mountPath: /otel/etc
           readOnly: true
         - name: varlog
           mountPath: C:\var\log
@@ -179,6 +177,9 @@ spec:
       - name: hostfs
         hostPath:
           path: C:\
+      - name: secret
+        secret:
+          secretName: default-splunk-otel-collector
       - name: otel-configmap
         configMap:
           name: default-splunk-otel-collector-otel-agent

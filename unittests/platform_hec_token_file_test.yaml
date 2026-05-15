@@ -1,0 +1,130 @@
+suite: splunk-otel-collector.platformHecTokenFile
+values:
+  - ./values/basic.yaml
+release:
+  name: test-release
+  namespace: test-ns
+templates:
+  - configmap-agent.yaml
+  - daemonset.yaml
+  - deployment-gateway.yaml
+  - deployment-cluster-receiver.yaml
+
+tests:
+  - it: should configure HEC exporters to read the platform token from a file
+    set:
+      splunkObservability:
+        realm: ""
+      splunkPlatform:
+        endpoint: https://hec.example.com/services/collector/event
+        token: platform-token
+        metricsEnabled: true
+        metricsIndex: metrics
+        tracesEnabled: true
+        tracesIndex: traces
+    template: configmap-agent.yaml
+    asserts:
+      - matchRegex:
+          path: data["relay"]
+          pattern: "splunk_hec/platform_logs:[\\s\\S]+?token: \"?\\$\\{file:/otel/etc/splunk_platform_hec_token\\}\"?"
+      - matchRegex:
+          path: data["relay"]
+          pattern: "splunk_hec/platform_metrics:[\\s\\S]+?token: \"?\\$\\{file:/otel/etc/splunk_platform_hec_token\\}\"?"
+      - matchRegex:
+          path: data["relay"]
+          pattern: "splunk_hec/platform_traces:[\\s\\S]+?token: \"?\\$\\{file:/otel/etc/splunk_platform_hec_token\\}\"?"
+      - notMatchRegex:
+          path: data["relay"]
+          pattern: "SPLUNK_PLATFORM_HEC_TOKEN"
+
+  - it: should mount the Splunk secret on agent without injecting the HEC token env var
+    set:
+      splunkObservability:
+        realm: ""
+      splunkPlatform:
+        endpoint: https://hec.example.com/services/collector/event
+        token: platform-token
+    template: daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: secret
+            mountPath: /otel/etc
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret
+            secret:
+              secretName: test-release-splunk-otel-collector
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPLUNK_PLATFORM_HEC_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: test-release-splunk-otel-collector
+                key: splunk_platform_hec_token
+
+  - it: should mount the Splunk secret on gateway without injecting the HEC token env var
+    set:
+      splunkObservability:
+        realm: ""
+      gateway:
+        enabled: true
+      splunkPlatform:
+        endpoint: https://hec.example.com/services/collector/event
+        token: platform-token
+    template: deployment-gateway.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: secret
+            mountPath: /otel/etc
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret
+            secret:
+              secretName: test-release-splunk-otel-collector
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPLUNK_PLATFORM_HEC_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: test-release-splunk-otel-collector
+                key: splunk_platform_hec_token
+
+  - it: should mount the Splunk secret on cluster receiver without injecting the HEC token env var
+    set:
+      splunkObservability:
+        realm: ""
+      splunkPlatform:
+        endpoint: https://hec.example.com/services/collector/event
+        token: platform-token
+    template: deployment-cluster-receiver.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: secret
+            mountPath: /otel/etc
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret
+            secret:
+              secretName: test-release-splunk-otel-collector
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPLUNK_PLATFORM_HEC_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: test-release-splunk-otel-collector
+                key: splunk_platform_hec_token

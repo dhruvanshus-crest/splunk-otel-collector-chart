@@ -56,8 +56,9 @@ The exporter name for platform logs sent via OTLP (otlp/platform_logs or otlp_ht
 {{/*
 Whether the Splunk Platform secret must be mounted as files for HEC or OTLP TLS.
 */}}
-{{- define "splunk-otel-collector.platformTlsSecretMountRequired" -}}
+{{- define "splunk-otel-collector.platformSecretMountRequired" -}}
 {{- if or
+      (eq (include "splunk-otel-collector.platformHecTokenRequired" .) "true")
       .Values.splunkPlatform.clientCert
       .Values.splunkPlatform.clientKey
       .Values.splunkPlatform.caFile
